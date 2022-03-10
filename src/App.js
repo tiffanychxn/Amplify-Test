@@ -55,7 +55,7 @@ async function createNote() {
 
   return (
     <div className="App">
-      <h1>My Notes App</h1>
+      <h1>My Note(s) App</h1>
       <input
         onChange={e => setFormData({ ...formData, 'name': e.target.value})}
         placeholder="Note name"
