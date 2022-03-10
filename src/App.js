@@ -1,29 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { API } from 'aws-amplify';
+import { API, Storage } from 'aws-amplify';
+import { withAuthenticator, Authenticator } from '@aws-amplify/ui-react';
 import { listNotes } from './graphql/queries';
 import { createNote as createNoteMutation, deleteNote as deleteNoteMutation } from './graphql/mutations';
-import { Authenticator } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
-import { API, Storage } from 'aws-amplify';
-
-
-// function App() {
-//   return (
-    // <Authenticator>
-    //   {({ signOut, user }) => (
-    //     <div className="App">
-    //       <p>
-    //         Hey {user.username}, welcome to my channel, with auth!
-    //       </p>
-    //       <button onClick={signOut}>Sign out</button>
-    //     </div>
-    //   )}
-    // </Authenticator>
-//   );
-// }
-
-// export default App;
 
 const initialFormState = { name: '', description: '' }
 
@@ -35,19 +15,6 @@ function App() {
     fetchNotes();
   }, []);
 
-  async function fetchNotes() {
-    const apiData = await API.graphql({ query: listNotes });
-    const notesFromAPI = apiData.data.listNotes.items;
-    await Promise.all(notesFromAPI.map(async note => {
-      if (note.image) {
-        const image = await Storage.get(note.image);
-        note.image = image;
-      }
-      return note;
-    }))
-    setNotes(apiData.data.listNotes.items);
-  }
-
   async function onChange(e) {
     if (!e.target.files[0]) return
     const file = e.target.files[0];
@@ -56,16 +23,29 @@ function App() {
     fetchNotes();
   }
 
-  async function createNote() {
-    if (!formData.name || !formData.description) return;
-    await API.graphql({ query: createNoteMutation, variables: { input: formData } });
-    if (formData.image) {
-      const image = await Storage.get(formData.image);
-      formData.image = image;
+  async function fetchNotes() {
+  const apiData = await API.graphql({ query: listNotes });
+  const notesFromAPI = apiData.data.listNotes.items;
+  await Promise.all(notesFromAPI.map(async note => {
+    if (note.image) {
+      const image = await Storage.get(note.image);
+      note.image = image;
     }
-    setNotes([ ...notes, formData ]);
-    setFormData(initialFormState);
+    return note;
+  }))
+  setNotes(apiData.data.listNotes.items);
+}
+
+async function createNote() {
+  if (!formData.name || !formData.description) return;
+  await API.graphql({ query: createNoteMutation, variables: { input: formData } });
+  if (formData.image) {
+    const image = await Storage.get(formData.image);
+    formData.image = image;
   }
+  setNotes([ ...notes, formData ]);
+  setFormData(initialFormState);
+}
 
   async function deleteNote({ id }) {
     const newNotesArray = notes.filter(note => note.id !== id);
@@ -89,7 +69,7 @@ function App() {
       <input
       type="file"
       onChange={onChange}
-    />
+      />
       <button onClick={createNote}>Create Note</button>
       <div style={{marginBottom: 30}}>
       {
@@ -105,18 +85,9 @@ function App() {
         ))
       }
       </div>
-      <Authenticator>
-      {({ signOut, user }) => (
-        <div className="App">
-          <p>
-            Hey {user.username}, welcome to my channel, with auth!
-          </p>
-          <button onClick={signOut}>Sign out</button>
-        </div>
-      )}
-    </Authenticator>
+      <Authenticator />
     </div>
   );
 }
 
-export default App;
+export default withAuthenticator(App);
