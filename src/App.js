@@ -55,7 +55,7 @@ async function createNote() {
 
   return (
     <div className="App">
-      <h1>My Note(s) App</h1>
+      <h1>My Note(s) App Test</h1>
       <input
         onChange={e => setFormData({ ...formData, 'name': e.target.value})}
         placeholder="Note name"
@@ -85,7 +85,14 @@ async function createNote() {
         ))
       }
       </div>
-      <Authenticator />
+      <Authenticator>
+      {({ signOut, user }) => (
+        <main>
+          <h1>Hello {user.username}</h1>
+          <button onClick={signOut}>Sign out</button>
+        </main>
+      )}
+    </Authenticator>
     </div>
   );
 }
